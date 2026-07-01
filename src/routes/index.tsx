@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { getQuestions, type Sort } from '@/server/functions'
+import { getQuestions } from '@/server/functions'
+
+type Sort = 'newest' | 'votes' | 'unanswered'
 
 export const Route = createFileRoute('/')({
   validateSearch: (search: Record<string, unknown>): { sort?: Sort } => {
@@ -10,15 +12,13 @@ export const Route = createFileRoute('/')({
     return {}
   },
   loaderDeps: ({ search: { sort } }) => ({ sort: sort ?? 'newest' }),
-  loader: async ({ deps: { sort } }) => {
-    return getQuestions(sort)
-  },
+  loader: ({ deps: { sort } }) => getQuestions({ data: sort }),
   component: HomePage,
 })
 
 function HomePage() {
   const { sort = 'newest' } = Route.useSearch()
-  const data = Route.useLoaderData()
+  const questions = Route.useLoaderData()
 
   return (
     <main className="mx-auto max-w-3xl p-8">
@@ -42,16 +42,18 @@ function HomePage() {
       </div>
 
       <ul className="mt-6 space-y-3">
-        {data.map((q) => (
-          <li key={q.id} className="rounded border bg-white p-4">
+        {questions.map((question) => (
+          <li key={question.id} className="rounded border bg-white p-4">
             <Link
               to="/questions/$questionId"
-              params={{ questionId: q.id }}
+              params={{ questionId: question.id }}
               className="text-lg font-semibold text-blue-700 hover:underline"
             >
-              {q.title}
+              {question.title}
             </Link>
-            <p className="mt-1 text-sm text-gray-500">{q.votes} votos</p>
+            <p className="mt-1 text-sm text-gray-500">
+              {question.votes} votos · {question.answerCount} respuestas
+            </p>
           </li>
         ))}
       </ul>
