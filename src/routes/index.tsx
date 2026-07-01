@@ -1,11 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-
-type Sort = 'newest' | 'votes' | 'unanswered'
-
-const mockQuestions = [
-  { id: '1', title: 'Cuando usar Server Functions vs route loader?', votes: 12 },
-  { id: '2', title: 'Como configurar Nitro para Vercel?', votes: 8 },
-]
+import { getQuestions, type Sort } from '@/server/functions'
 
 export const Route = createFileRoute('/')({
   validateSearch: (search: Record<string, unknown>): { sort?: Sort } => {
@@ -17,7 +11,7 @@ export const Route = createFileRoute('/')({
   },
   loaderDeps: ({ search: { sort } }) => ({ sort: sort ?? 'newest' }),
   loader: async ({ deps: { sort } }) => {
-    return mockQuestions
+    return getQuestions(sort)
   },
   component: HomePage,
 })
