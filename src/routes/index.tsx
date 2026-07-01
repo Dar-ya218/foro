@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { getQuestions } from '@/server/functions'
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { questionsQuery } from '@/lib/queries'
 
 type Sort = 'newest' | 'votes' | 'unanswered'
 
@@ -12,13 +13,14 @@ export const Route = createFileRoute('/')({
     return {}
   },
   loaderDeps: ({ search: { sort } }) => ({ sort: sort ?? 'newest' }),
-  loader: ({ deps: { sort } }) => getQuestions({ data: sort }),
+  loader: ({ context: { queryClient }, deps: { sort } }) =>
+    queryClient.ensureQueryData(questionsQuery(sort)),
   component: HomePage,
 })
 
 function HomePage() {
   const { sort = 'newest' } = Route.useSearch()
-  const questions = Route.useLoaderData()
+  const { data: questions } = useSuspenseQuery(questionsQuery(sort))
 
   return (
     <main className="mx-auto max-w-3xl p-8">
@@ -42,17 +44,17 @@ function HomePage() {
       </div>
 
       <ul className="mt-6 space-y-3">
-        {questions.map((question) => (
-          <li key={question.id} className="rounded border bg-white p-4">
+        {questions.map((q) => (
+          <li key={q.id} className="rounded border bg-white p-4">
             <Link
               to="/questions/$questionId"
-              params={{ questionId: question.id }}
+              params={{ questionId: q.id }}
               className="text-lg font-semibold text-blue-700 hover:underline"
             >
-              {question.title}
+              {q.title}
             </Link>
             <p className="mt-1 text-sm text-gray-500">
-              {question.votes} votos · {question.answerCount} respuestas
+              {q.votes} votos · {q.answerCount} respuestas · {q.authorName}
             </p>
           </li>
         ))}
